@@ -1,0 +1,32 @@
+.form-fade-in {
+  animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.input-focus-anim {
+  transition: box-shadow 0.3s, border 0.3s;
+}
+.input-focus-anim:focus {
+  box-shadow: 0 0 0 2px #e1034d44;
+  border: 1.5px solid #e1034d;
+}
+
+.label-anim {
+  position: relative;
+  transition: color 0.3s;
+}
+
+.input-group input:focus + .label-anim,
+.input-group input:not(:placeholder-shown) + .label-anim {
+  color: #e1034d;
+}

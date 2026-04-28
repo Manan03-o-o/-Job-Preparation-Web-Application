@@ -1,9 +1,19 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:3000",
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000", // ✅ use env variable with fallback
     withCredentials: true,
 })
+
+// ✅ centralised error handling — all failed requests are caught here
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const message = error.response?.data?.message || error.message || "An unexpected error occurred"
+        console.error("[API Error]", message)
+        return Promise.reject(new Error(message))
+    }
+)
 
 
 /**
@@ -16,11 +26,9 @@ export const generateInterviewReport = async ({ jobDescription, selfDescription,
     formData.append("selfDescription", selfDescription)
     formData.append("resume", resumeFile)
 
-    const response = await api.post("/api/interview/", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data"
-        }
-    })
+    // ✅ removed manual "Content-Type" header — Axios sets it automatically for FormData
+    //    including the correct multipart boundary, which a manual header would break
+    const response = await api.post("/api/interview/", formData)
 
     return response.data
 
@@ -51,7 +59,7 @@ export const getAllInterviewReports = async () => {
  * @description Service to generate resume pdf based on user self description, resume content and job description.
  */
 export const generateResumePdf = async ({ interviewReportId }) => {
-    const response = await api.post(`/api/interview/resume/pdf/${interviewReportId}`, null, {
+    const response = await api.post(`/api/interview/resume/pdf/${interviewReportId}`, {}, { // ✅ {} instead of null for empty body
         responseType: "blob"
     })
 

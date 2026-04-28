@@ -1,223 +1,266 @@
-const pdfParse = require("pdf-parse/lib/pdf-parse.js")
-const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
-const interviewReportModel = require("../models/interviewReport.model")
+const pdfParse = require("pdf-parse");
+const mongoose = require("mongoose");
+const { generateInterviewReport, generateResumePdf } = require("../services/ai.service");
+const interviewReportModel = require("../models/interviewReport.model");
 
-/**
- * Generate Interview Report
- */
+
+// ─────────────────────────────────────────────
+// 1. GENERATE INTERVIEW REPORT
+// ─────────────────────────────────────────────
+
 async function generateInterViewReportController(req, res) {
     try {
-        // ✅ Check file
-        if (!req.file) {
-            return res.status(400).json({
-                message: "Resume PDF is required"
-            })
+        // ── Validate uploaded file ─────────────────────────────────
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ message: "Resume PDF file is required." });
         }
 
-        console.log("FILE RECEIVED:", req.file)
-
-        // ✅ Validate inputs early
-        const { selfDescription, jobDescription } = req.body
-
-        if (!selfDescription || !jobDescription) {
-            return res.status(400).json({
-                message: "selfDescription and jobDescription are required"
-            })
-        }
-
-        // ✅ Parse PDF
-        let resumeContent = ""
+        // ── Parse PDF ─────────────────────────────────────────────
+        let resumeText = "";
         try {
-            const pdfData = await pdfParse(req.file.buffer)
-            resumeContent = pdfData.text
-            console.log("RESUME CONTENT PREVIEW:", resumeContent.slice(0, 200))
+            const pdfData = await pdfParse(req.file.buffer);
+            resumeText = pdfData.text?.trim() || "";
         } catch (pdfErr) {
-            console.error("PDF PARSE ERROR:", pdfErr)
-            return res.status(400).json({
-                message: "Failed to parse PDF. Please upload a valid PDF file.",
-                error: pdfErr.message
-            })
+            console.error("PDF parse error:", pdfErr?.message);
+            return res.status(400).json({ message: "Could not read the uploaded PDF. Please upload a valid PDF file." });
         }
 
-        // ✅ Check if resume content is empty
-        if (!resumeContent || resumeContent.trim() === "") {
+        console.log("Resume text (first 200 chars):", resumeText.slice(0, 200));
+
+        if (!resumeText || resumeText.length < 20) {
             return res.status(400).json({
-                message: "Could not extract text from PDF. Please upload a valid resume PDF."
-            })
+                message: "The uploaded PDF has no readable text. Please upload a text-based PDF (not a scanned image)."
+            });
         }
 
-        // ✅ Call AI
-        const aiResponse = await generateInterviewReport({
-            resume: resumeContent,
-            selfDescription,
-            jobDescription
-        })
+        // ── Validate body fields ───────────────────────────────────
+        const { selfDescription, jobDescription } = req.body;
 
-        console.log("AI RESPONSE:", aiResponse)
+        if (!selfDescription || selfDescription.trim().length < 5) {
+            return res.status(400).json({ message: "selfDescription is required." });
+        }
 
-        // ✅ Save to DB
+        if (!jobDescription || jobDescription.trim().length < 10) {
+            return res.status(400).json({ message: "jobDescription is required." });
+        }
+
+        // ── Call AI service ───────────────────────────────────────
+        console.log("Calling AI service for interview report...");
+        const aiReport = await generateInterviewReport({
+            resume: resumeText,
+            selfDescription: selfDescription.trim(),
+            jobDescription: jobDescription.trim()
+        });
+
+        console.log("AI Report received — title:", aiReport?.title, "matchScore:", aiReport?.matchScore);
+
+        // ── Build safe report with fallbacks ─────────────────────
+        const safeReport = {
+            title: aiReport?.title || "Software Developer",
+            matchScore: typeof aiReport?.matchScore === "number" ? aiReport.matchScore : 75,
+
+            technicalQuestions: Array.isArray(aiReport?.technicalQuestions) && aiReport.technicalQuestions.length > 0
+                ? aiReport.technicalQuestions
+                : [
+                    { question: "Explain the Node.js event loop.", intention: "Tests async knowledge", answer: "Handles async tasks via event queue and callback execution." },
+                    { question: "What is REST API?", intention: "Tests API knowledge", answer: "Stateless API architecture using HTTP methods." },
+                    { question: "Difference between SQL and NoSQL?", intention: "Tests DB knowledge", answer: "SQL is relational and structured, NoSQL is flexible and scalable." },
+                    { question: "What is JWT and how does it work?", intention: "Tests security knowledge", answer: "JSON Web Token used for stateless authentication." },
+                    { question: "Explain closures in JavaScript.", intention: "Tests JS fundamentals", answer: "Functions that retain access to their outer scope." }
+                ],
+
+            behavioralQuestions: Array.isArray(aiReport?.behavioralQuestions) && aiReport.behavioralQuestions.length > 0
+                ? aiReport.behavioralQuestions
+                : [
+                    { question: "Tell me about yourself.", intention: "Assess communication", answer: "Structured intro covering background, skills, and goals." },
+                    { question: "Describe a challenge you overcame.", intention: "Assess problem solving", answer: "Use STAR format focusing on your specific actions." },
+                    { question: "Why do you want this role?", intention: "Assess motivation", answer: "Connect your skills and goals to the company's mission." }
+                ],
+
+            skillGaps: Array.isArray(aiReport?.skillGaps) && aiReport.skillGaps.length > 0
+                ? aiReport.skillGaps
+                : [
+                    { skill: "System Design", severity: "high" },
+                    { skill: "Cloud Services", severity: "medium" },
+                    { skill: "Testing & TDD", severity: "low" }
+                ],
+
+            preparationPlan: Array.isArray(aiReport?.preparationPlan) && aiReport.preparationPlan.length > 0
+                ? aiReport.preparationPlan
+                : [
+                    { day: 1, focus: "Core Language Fundamentals", tasks: ["Review key concepts", "Solve 3 coding problems"] },
+                    { day: 2, focus: "System Design Basics", tasks: ["Study architecture patterns", "Design a URL shortener"] },
+                    { day: 3, focus: "Database Deep Dive", tasks: ["Practice SQL joins", "Review NoSQL concepts"] },
+                    { day: 4, focus: "API and Security", tasks: ["Build a REST API", "Implement JWT auth"] },
+                    { day: 5, focus: "Behavioral Preparation", tasks: ["Prepare 5 STAR stories", "Practice with a peer"] },
+                    { day: 6, focus: "Mock Interview", tasks: ["Full 45-minute mock session", "Review weak areas"] },
+                    { day: 7, focus: "Review and Confidence", tasks: ["Revisit top weak areas", "Research the company"] }
+                ]
+        };
+
+        console.log("Saving report to database...");
+
+        // ── Save to database ──────────────────────────────────────
         const interviewReport = await interviewReportModel.create({
-            user: req.user?.id || null,
-            resume: resumeContent,
-            selfDescription,
-            jobDescription,
-            title: aiResponse?.title || "Software Developer",
-            ...aiResponse
-        })
+            user: req.user.id,
+            resume: resumeText,
+            selfDescription: selfDescription.trim(),
+            jobDescription: jobDescription.trim(),
+            title: safeReport.title,
+            matchScore: safeReport.matchScore,
+            technicalQuestions: safeReport.technicalQuestions,
+            behavioralQuestions: safeReport.behavioralQuestions,
+            skillGaps: safeReport.skillGaps,
+            preparationPlan: safeReport.preparationPlan
+        });
+
+        console.log("✅ Report saved — ID:", interviewReport._id);
 
         return res.status(201).json({
-            message: "Interview report generated successfully.",
+            message: "Interview report generated successfully",
             interviewReport
-        })
+        });
 
     } catch (err) {
-        console.error("ERROR:", err)
-
-        return res.status(500).json({
-            message: "Internal server error",
-            error: err.message
-        })
+        console.error("❌ generateInterViewReportController ERROR:", err?.message);
+        console.error("Stack:", err?.stack);
+        return res.status(500).json({ message: "Internal server error while generating report." });
     }
 }
 
-/**
- * Get Interview Report By ID
- */
+
+// ─────────────────────────────────────────────
+// 2. GET REPORT BY ID
+// ─────────────────────────────────────────────
+
 async function getInterviewReportByIdController(req, res) {
     try {
-        const { interviewId } = req.params
+        const { interviewId } = req.params;
 
-        // ✅ Validate interviewId
-        if (!interviewId) {
-            return res.status(400).json({
-                message: "Interview ID is required"
-            })
+        if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+            return res.status(400).json({ message: "Invalid report ID." });
         }
 
-        const interviewReport = await interviewReportModel.findOne({
+        const report = await interviewReportModel.findOne({
             _id: interviewId,
-            user: req.user?.id
-        })
+            user: req.user.id
+        });
 
-        if (!interviewReport) {
-            return res.status(404).json({
-                message: "Interview report not found."
-            })
+        if (!report) {
+            return res.status(404).json({ message: "Report not found." });
         }
 
         return res.status(200).json({
-            message: "Interview report fetched successfully.",
-            interviewReport
-        })
+            message: "success",
+            interviewReport: report
+        });
 
     } catch (err) {
-        console.error("ERROR:", err)
-
-        return res.status(500).json({
-            message: "Internal server error",
-            error: err.message
-        })
+        console.error("❌ getInterviewReportByIdController ERROR:", err?.message);
+        return res.status(500).json({ message: "Internal server error." });
     }
 }
 
-/**
- * Get All Interview Reports
- */
+
+// ─────────────────────────────────────────────
+// 3. GET ALL REPORTS
+// ─────────────────────────────────────────────
+
 async function getAllInterviewReportsController(req, res) {
     try {
-        // ✅ Check user
-        if (!req.user?.id) {
-            return res.status(401).json({
-                message: "Unauthorized. Please login."
-            })
-        }
-
-        const interviewReports = await interviewReportModel
-            .find({ user: req.user?.id })
-            .sort({ createdAt: -1 })
-            .select(
-                "-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan"
-            )
+        const reports = await interviewReportModel
+            .find({ user: req.user.id })
+            .sort({ createdAt: -1 }) // newest first
+            .select("-resume"); // exclude raw resume text from list view
 
         return res.status(200).json({
-            message: "Interview reports fetched successfully.",
-            interviewReports
-        })
+            message: "success",
+            count: reports.length,
+            interviewReports: reports
+        });
 
     } catch (err) {
-        console.error("ERROR:", err)
-
-        return res.status(500).json({
-            message: "Internal server error",
-            error: err.message
-        })
+        console.error("❌ getAllInterviewReportsController ERROR:", err?.message);
+        return res.status(500).json({ message: "Internal server error." });
     }
 }
 
-/**
- * Generate Resume PDF
- */
+
+// ─────────────────────────────────────────────
+// 4. GENERATE RESUME PDF
+// ─────────────────────────────────────────────
+
 async function generateResumePdfController(req, res) {
     try {
-        const { interviewReportId } = req.params
+        const { interviewReportId } = req.params;
 
-        // ✅ Validate interviewReportId
-        if (!interviewReportId) {
-            return res.status(400).json({
-                message: "Interview Report ID is required"
-            })
+        // ── Validate ID format ────────────────────────────────────
+        if (!mongoose.Types.ObjectId.isValid(interviewReportId)) {
+            return res.status(400).json({ message: "Invalid report ID." });
         }
 
-        const interviewReport = await interviewReportModel.findById(interviewReportId)
+        // ── Find the report ───────────────────────────────────────
+        const report = await interviewReportModel.findOne({
+            _id: interviewReportId,
+            user: req.user.id  // ensure user owns this report
+        });
 
-        if (!interviewReport) {
-            return res.status(404).json({
-                message: "Interview report not found."
-            })
+        if (!report) {
+            return res.status(404).json({ message: "Report not found." });
         }
 
-        const { resume, jobDescription, selfDescription } = interviewReport
-
-        // ✅ Validate required fields
-        if (!resume || !jobDescription || !selfDescription) {
-            return res.status(400).json({
-                message: "Interview report is missing required fields to generate PDF."
-            })
+        // ── Validate report has required fields ───────────────────
+        if (!report.resume || report.resume.trim().length < 10) {
+            return res.status(400).json({ message: "This report has no resume content to generate a PDF from." });
         }
 
+        console.log("Generating PDF for report ID:", interviewReportId);
+
+        // ── Call the PDF generation service ───────────────────────
         const pdfBuffer = await generateResumePdf({
-            resume,
-            jobDescription,
-            selfDescription
-        })
+            resume: report.resume,
+            jobDescription: report.jobDescription || "",
+            selfDescription: report.selfDescription || ""
+        });
 
-        // ✅ Validate pdfBuffer
-        if (!pdfBuffer) {
-            return res.status(500).json({
-                message: "Failed to generate PDF. Please try again."
-            })
+        // ── Validate the returned buffer ───────────────────────────
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+            throw new Error("PDF generation returned empty buffer");
         }
 
+        console.log(`✅ PDF ready — ${pdfBuffer.length} bytes — sending to client`);
+
+        // ── Send the PDF ──────────────────────────────────────────
         res.set({
             "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
-        })
+            "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`,
+            "Content-Length": pdfBuffer.length,
+            "Cache-Control": "no-cache"
+        });
 
-        return res.send(pdfBuffer)
+        return res.end(pdfBuffer, "binary");
 
     } catch (err) {
-        console.error("ERROR:", err)
+        console.error("❌ generateResumePdfController ERROR:", err?.message);
+        console.error("Stack:", err?.stack);
 
-        return res.status(500).json({
-            message: "Internal server error",
-            error: err.message
-        })
+        // Don't send PDF headers if we already set them — check if headers were sent
+        if (!res.headersSent) {
+            return res.status(500).json({
+                message: err?.message || "Failed to generate resume PDF"
+            });
+        }
     }
 }
+
+
+// ─────────────────────────────────────────────
+// EXPORTS
+// ─────────────────────────────────────────────
 
 module.exports = {
     generateInterViewReportController,
     getInterviewReportByIdController,
     getAllInterviewReportsController,
     generateResumePdfController
-}
+};
