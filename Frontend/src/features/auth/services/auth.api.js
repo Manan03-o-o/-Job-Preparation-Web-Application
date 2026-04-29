@@ -1,48 +1,54 @@
 import axios from "axios";
 
-// Create API instance with base URL from env
+// 🔥 Production backend URL (no env confusion)
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true, // ✅ Required to send cookies (JWT token)
+  baseURL: "https://prepify-backend-edvt.onrender.com",
+  withCredentials: true, // required for cookies
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor to attach token to requests (if stored in localStorage for backup)
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token"); // Optional backup if cookies fail
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// ✅ Global error handling (optional but useful)
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      "Something went wrong";
+    console.error("[API ERROR]:", message);
+    return Promise.reject(new Error(message));
   }
-  return config;
-});
+);
 
-// ✅ Register function
-export const register = async (userData) => {
-  const response = await API.post("/api/auth/register", userData);
+// 🔐 REGISTER
+export const register = async ({ username, email, password }) => {
+  const response = await API.post("/api/auth/register", {
+    username,
+    email,
+    password,
+  });
   return response.data;
 };
 
-// ✅ Login function
-export const login = async (userData) => {
-  const response = await API.post("/api/auth/login", userData);
+// 🔐 LOGIN
+export const login = async ({ email, password }) => {
+  const response = await API.post("/api/auth/login", {
+    email,
+    password,
+  });
   return response.data;
 };
 
-// ✅ Logout function
+// 🔓 LOGOUT
 export const logout = async () => {
   const response = await API.get("/api/auth/logout");
   return response.data;
 };
 
-// ✅ Fix getMe function to call correct endpoint
+// 👤 GET CURRENT USER
 export const getMe = async () => {
-  try {
-    const response = await API.get("/api/auth/get-me"); // ✅ Matches backend route
-    return response.data;
-  } catch (err) {
-    console.error("getMe API error:", err?.response?.data || err.message);
-    throw err; // Re-throw to let useAuth handle it
-  }
+  const response = await API.get("/api/auth/get-me");
+  return response.data;
 };
