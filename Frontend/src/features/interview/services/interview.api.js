@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000", // ✅ use env variable with fallback
+    baseURL: import.meta.env.VITE_API_BASE_URL , // ✅ use env variable with fallback
     withCredentials: true,
 })
 
