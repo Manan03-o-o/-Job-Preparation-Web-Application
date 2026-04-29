@@ -1,50 +1,48 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // Use env variable for backend URL
-  withCredentials: true,
+// Create API instance with base URL from env
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true, // ✅ Required to send cookies (JWT token)
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-export async function register({ username, email, password }) {
-  try {
-    const response = await api.post("/api/auth/register", {
-      username,
-      email,
-      password,
-    });
-    return response.data;
-  } catch (err) {
-    console.error("Register error:", err);
-    return null;
+// Interceptor to attach token to requests (if stored in localStorage for backup)
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token"); // Optional backup if cookies fail
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-}
+  return config;
+});
 
-export async function login({ email, password }) {
-  try {
-    const response = await api.post("/api/auth/login", { email, password });
-    return response.data;
-  } catch (err) {
-    console.error("Login error:", err);
-    return null;
-  }
-}
+// ✅ Register function
+export const register = async (userData) => {
+  const response = await API.post("/api/auth/register", userData);
+  return response.data;
+};
 
-export async function logout() {
-  try {
-    const response = await api.get("/api/auth/logout");
-    return response.data;
-  } catch (err) {
-    console.error("Logout error:", err);
-    return null;
-  }
-}
+// ✅ Login function
+export const login = async (userData) => {
+  const response = await API.post("/api/auth/login", userData);
+  return response.data;
+};
 
-export async function getMe() {
+// ✅ Logout function
+export const logout = async () => {
+  const response = await API.get("/api/auth/logout");
+  return response.data;
+};
+
+// ✅ Fix getMe function to call correct endpoint
+export const getMe = async () => {
   try {
-    const response = await api.get("/api/auth/get-me");
+    const response = await API.get("/api/auth/get-me"); // ✅ Matches backend route
     return response.data;
   } catch (err) {
-    console.error("getMe error:", err);
-    return null;
+    console.error("getMe API error:", err?.response?.data || err.message);
+    throw err; // Re-throw to let useAuth handle it
   }
-}
+};
