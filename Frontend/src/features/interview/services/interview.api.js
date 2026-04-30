@@ -1,67 +1,93 @@
 import axios from "axios";
 
+// ✅ Create API instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL , // ✅ use env variable with fallback
-    withCredentials: true,
-})
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+});
 
-// ✅ centralised error handling — all failed requests are caught here
+// 🔥 ADD THIS (MOST IMPORTANT — SEND TOKEN)
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
+// ✅ centralised error handling
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        const message = error.response?.data?.message || error.message || "An unexpected error occurred"
-        console.error("[API Error]", message)
-        return Promise.reject(new Error(message))
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            "An unexpected error occurred";
+
+        console.error("[API Error]", message);
+        return Promise.reject(new Error(message));
     }
-)
+);
 
 
 /**
- * @description Service to generate interview report based on user self description, resume and job description.
+ * 🚀 Generate Interview Report
  */
-export const generateInterviewReport = async ({ jobDescription, selfDescription, resumeFile }) => {
+export const generateInterviewReport = async ({
+    jobDescription,
+    selfDescription,
+    resumeFile
+}) => {
+    const formData = new FormData();
 
-    const formData = new FormData()
-    formData.append("jobDescription", jobDescription)
-    formData.append("selfDescription", selfDescription)
-    formData.append("resume", resumeFile)
+    formData.append("jobDescription", jobDescription);
+    formData.append("selfDescription", selfDescription);
+    formData.append("resume", resumeFile);
 
-    // ✅ removed manual "Content-Type" header — Axios sets it automatically for FormData
-    //    including the correct multipart boundary, which a manual header would break
-    const response = await api.post("/api/interview/", formData)
+    // ❌ removed trailing slash
+    const response = await api.post("/api/interview", formData);
 
-    return response.data
-
-}
+    return response?.data;
+};
 
 
 /**
- * @description Service to get interview report by interviewId.
+ * 📄 Get Interview Report by ID
  */
 export const getInterviewReportById = async (interviewId) => {
-    const response = await api.get(`/api/interview/report/${interviewId}`)
+    if (!interviewId) return null;
 
-    return response.data
-}
+    const response = await api.get(`/api/interview/report/${interviewId}`);
+
+    return response?.data;
+};
 
 
 /**
- * @description Service to get all interview reports of logged in user.
+ * 📚 Get All Interview Reports
  */
 export const getAllInterviewReports = async () => {
-    const response = await api.get("/api/interview/")
+    // ❌ removed trailing slash
+    const response = await api.get("/api/interview");
 
-    return response.data
-}
+    return response?.data;
+};
 
 
 /**
- * @description Service to generate resume pdf based on user self description, resume content and job description.
+ * 📥 Generate Resume PDF
  */
 export const generateResumePdf = async ({ interviewReportId }) => {
-    const response = await api.post(`/api/interview/resume/pdf/${interviewReportId}`, {}, { // ✅ {} instead of null for empty body
-        responseType: "blob"
-    })
+    if (!interviewReportId) return null;
 
-    return response.data
-}
+    const response = await api.post(
+        `/api/interview/resume/pdf/${interviewReportId}`,
+        {},
+        {
+            responseType: "blob",
+        }
+    );
+
+    return response?.data;
+};
