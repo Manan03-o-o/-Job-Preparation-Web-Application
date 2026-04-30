@@ -1,15 +1,25 @@
 import axios from "axios";
 
-// 🔥 Production backend URL (no env confusion)
+// 🔥 Production backend URL
 const API = axios.create({
   baseURL: "https://prepify-backend-edvt.onrender.com",
-  withCredentials: true, // required for cookies
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// ✅ Global error handling (optional but useful)
+// 🔥 ADD THIS (MOST IMPORTANT)
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+// ✅ Global error handling
 API.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -29,22 +39,27 @@ export const register = async ({ username, email, password }) => {
     email,
     password,
   });
+
   return response.data;
 };
 
-// 🔐 LOGIN
+// 🔐 LOGIN (🔥 STORE TOKEN HERE)
 export const login = async ({ email, password }) => {
   const response = await API.post("/api/auth/login", {
     email,
     password,
   });
+
+  // 🔥 SAVE TOKEN
+  localStorage.setItem("token", response.data.token);
+
   return response.data;
 };
 
 // 🔓 LOGOUT
 export const logout = async () => {
-  const response = await API.get("/api/auth/logout");
-  return response.data;
+  localStorage.removeItem("token"); // 🔥 remove token
+  return { message: "Logged out" };
 };
 
 // 👤 GET CURRENT USER
