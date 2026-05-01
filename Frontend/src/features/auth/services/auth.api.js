@@ -1,40 +1,8 @@
-import axios from "axios";
-
-// 🔥 Production backend URL
-const API = axios.create({
-  baseURL: "https://prepify-backend-edvt.onrender.com",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// 🔥 ADD THIS (MOST IMPORTANT)
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-// ✅ Global error handling
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      "Something went wrong";
-    console.error("[API ERROR]:", message);
-    return Promise.reject(new Error(message));
-  }
-);
+import api from "../../../api/axios";
 
 // 🔐 REGISTER
 export const register = async ({ username, email, password }) => {
-  const response = await API.post("/api/auth/register", {
+  const response = await api.post("/api/auth/register", {
     username,
     email,
     password,
@@ -43,9 +11,9 @@ export const register = async ({ username, email, password }) => {
   return response.data;
 };
 
-// 🔐 LOGIN (🔥 STORE TOKEN HERE)
+// 🔐 LOGIN
 export const login = async ({ email, password }) => {
-  const response = await API.post("/api/auth/login", {
+  const response = await api.post("/api/auth/login", {
     email,
     password,
   });
@@ -58,12 +26,12 @@ export const login = async ({ email, password }) => {
 
 // 🔓 LOGOUT
 export const logout = async () => {
-  localStorage.removeItem("token"); // 🔥 remove token
+  localStorage.removeItem("token");
   return { message: "Logged out" };
 };
 
 // 👤 GET CURRENT USER
 export const getMe = async () => {
-  const response = await API.get("/api/auth/get-me");
+  const response = await api.get("/api/auth/get-me");
   return response.data;
 };
