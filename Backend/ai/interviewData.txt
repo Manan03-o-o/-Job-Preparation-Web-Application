@@ -1,0 +1,203 @@
+### TOPIC: React.js ###
+
+Q: What is React.js and why is it used?
+A: React.js is a declarative, component-based JavaScript library developed by Facebook for building user interfaces. It uses a virtual DOM to efficiently update the real DOM, resulting in high performance. React follows a unidirectional data flow making state management predictable. It is widely used for building single-page applications (SPAs) and complex UIs with reusable components.
+
+Q: What is the Virtual DOM and how does it work?
+A: The Virtual DOM is a lightweight in-memory representation of the real DOM. When state changes occur, React creates a new Virtual DOM tree, diffs it against the previous one using a reconciliation algorithm, and only applies the minimal set of changes to the real DOM. This batched update process is significantly faster than directly manipulating the DOM for every change.
+
+Q: Explain React component lifecycle methods.
+A: React class components have three lifecycle phases: Mounting (constructor, getDerivedStateFromProps, render, componentDidMount), Updating (getDerivedStateFromProps, shouldComponentUpdate, render, getSnapshotBeforeUpdate, componentDidUpdate), and Unmounting (componentWillUnmount). In functional components, the useEffect hook replaces most lifecycle methods — it runs after render by default, can mimic componentDidMount with an empty dependency array, and returns a cleanup function for componentWillUnmount behavior.
+
+Q: What are React Hooks? Explain useState and useEffect.
+A: Hooks are functions that let you use state and lifecycle features in functional components. useState returns a state variable and a setter function — it preserves state between re-renders. useEffect runs side effects after rendering — it takes a callback and an optional dependency array. With an empty array it runs once on mount, with dependencies it runs when those values change, and without an array it runs after every render.
+
+Q: What is the difference between useCallback and useMemo?
+A: useMemo memoizes a computed value and only recalculates when its dependencies change — used for expensive calculations. useCallback memoizes a function reference and returns the same function instance unless dependencies change — used to prevent unnecessary re-renders of child components that receive the function as a prop. Both are performance optimization hooks.
+
+Q: What is Context API and when should you use it?
+A: Context API provides a way to pass data through the component tree without manually passing props at every level (prop drilling). It consists of React.createContext, Context.Provider, and useContext hook. Use it for global data like themes, authentication state, or locale. However, for complex state management with frequent updates, Redux or Zustand may be more performant.
+
+Q: What is Redux and how does it differ from Context API?
+A: Redux is a predictable state container that uses a single store, actions, and reducers to manage application state. It follows a strict unidirectional data flow: dispatch(action) → reducer → new state → UI update. Unlike Context API, Redux provides middleware support (redux-thunk, redux-saga), dev tools for time-travel debugging, and better performance for frequent state updates through selective re-rendering.
+
+Q: Explain React Router and client-side routing.
+A: React Router enables navigation between views in a SPA without full page reloads. It uses BrowserRouter for HTML5 history API, Routes and Route components for path matching, Link and NavLink for navigation, and useNavigate hook for programmatic navigation. It supports nested routes, dynamic parameters (useParams), and protected routes using wrapper components.
+
+Q: What are Higher-Order Components (HOC) in React?
+A: A HOC is a function that takes a component and returns a new enhanced component. It is a pattern for reusing component logic — for example, withAuth(Component) can wrap any component with authentication checking. HOCs don't modify the original component; they compose it. Common use cases include authentication wrappers, logging, and data fetching.
+
+Q: What is code splitting and lazy loading in React?
+A: Code splitting breaks the application bundle into smaller chunks loaded on demand. React.lazy() allows dynamic import of components, and Suspense provides a fallback UI while the component loads. This reduces initial load time significantly. Route-based code splitting is the most common pattern, where each route loads its own chunk only when navigated to.
+
+### TOPIC: Node.js ###
+
+Q: What is Node.js and how does it work?
+A: Node.js is a JavaScript runtime built on Chrome's V8 engine that allows server-side JavaScript execution. It uses an event-driven, non-blocking I/O model making it efficient for data-intensive real-time applications. Node.js operates on a single thread but uses an event loop with libuv library to handle concurrent operations through callbacks, promises, and async/await patterns.
+
+Q: Explain the Node.js Event Loop in detail.
+A: The Event Loop is the core mechanism that handles asynchronous operations. It has six phases: timers (setTimeout/setInterval callbacks), pending callbacks (I/O callbacks deferred to next iteration), idle/prepare (internal), poll (retrieve new I/O events), check (setImmediate callbacks), and close callbacks. The event loop continuously cycles through these phases, executing callbacks from each phase's queue before moving to the next.
+
+Q: What is middleware in Express.js?
+A: Middleware functions are functions that have access to the request object, response object, and the next middleware function. They can execute code, modify req/res objects, end the request-response cycle, or call next(). Types include application-level (app.use), router-level (router.use), error-handling (4 parameters), built-in (express.json, express.static), and third-party (cors, helmet, morgan).
+
+Q: What is the difference between require and import in Node.js?
+A: require is CommonJS syntax — it is synchronous, loads modules at runtime, and supports conditional loading. import is ES Module syntax — it is asynchronous, statically analyzed at compile time, and supports tree shaking. CommonJS uses module.exports/exports for exporting, while ESM uses export/export default. Node.js supports both, but CommonJS is still the default for most backend projects.
+
+Q: Explain streams in Node.js.
+A: Streams are objects that let you read or write data continuously. There are four types: Readable (fs.createReadStream), Writable (fs.createWriteStream), Duplex (net.Socket — both read and write), and Transform (zlib — modify data as it passes through). Streams are memory efficient for large files because they process data in chunks rather than loading everything into memory at once.
+
+Q: How does clustering work in Node.js?
+A: The cluster module allows creating child processes (workers) that share the same server port. The master process forks workers equal to CPU cores using cluster.fork(). Each worker runs on its own thread with its own event loop and memory. The master distributes incoming connections among workers using round-robin (default on most platforms). This enables Node.js to utilize multi-core systems effectively.
+
+Q: What is the difference between process.nextTick() and setImmediate()?
+A: process.nextTick() executes the callback at the end of the current operation, before the event loop continues — it has highest priority. setImmediate() executes in the check phase of the next event loop iteration. nextTick can starve the event loop if called recursively, while setImmediate is safer for recursive callbacks. Use nextTick for operations that must complete before I/O, and setImmediate for deferring work.
+
+Q: How do you handle errors in Node.js?
+A: Error handling strategies include: try/catch for synchronous and async/await code, .catch() for promises, error-first callbacks (callback(err, data)), EventEmitter error events, Express error-handling middleware (4-parameter function), process.on('uncaughtException') and process.on('unhandledRejection') for global safety nets. Always log errors, return meaningful HTTP status codes, and never expose stack traces in production.
+
+### TOPIC: MongoDB ###
+
+Q: What is MongoDB and how does it differ from SQL databases?
+A: MongoDB is a document-oriented NoSQL database that stores data in flexible JSON-like BSON documents. Unlike SQL databases with rigid schemas and tables, MongoDB allows dynamic schemas, nested documents, and arrays within documents. It scales horizontally through sharding, while SQL typically scales vertically. MongoDB uses collections instead of tables, documents instead of rows, and fields instead of columns.
+
+Q: Explain MongoDB indexing and its types.
+A: Indexes improve query performance by creating efficient data structures for lookups. Types include: Single Field (index on one field), Compound (multiple fields), Multikey (array fields), Text (full-text search), Geospatial (2d/2dsphere for location queries), Hashed (hash-based sharding), and TTL (auto-delete documents after time). Use explain() to analyze query performance. Too many indexes slow down write operations.
+
+Q: What is the MongoDB Aggregation Pipeline?
+A: The aggregation pipeline processes documents through sequential stages. Key stages include: $match (filter documents), $group (group by field and compute aggregates), $project (reshape documents), $sort, $limit, $skip, $unwind (deconstruct arrays), $lookup (left outer join with another collection), $addFields, and $facet (multiple pipelines in parallel). Each stage transforms documents and passes results to the next stage.
+
+Q: Explain MongoDB replication and replica sets.
+A: A replica set is a group of mongod instances maintaining the same data. It consists of one primary node (handles writes) and multiple secondary nodes (replicate data from primary). If the primary fails, an automatic election process selects a new primary — this provides high availability. Secondaries can serve read operations to distribute load. An arbiter can participate in elections without holding data.
+
+Q: What is sharding in MongoDB?
+A: Sharding is horizontal scaling that distributes data across multiple servers (shards). A shard key determines how data is distributed. Components include: shard servers (store data), config servers (store metadata and routing), and mongos routers (direct queries to correct shards). Choosing the right shard key is critical — it should have high cardinality, even distribution, and support common query patterns.
+
+Q: What is Mongoose and why is it used with MongoDB?
+A: Mongoose is an ODM (Object Data Modeling) library for MongoDB and Node.js. It provides schema definitions with data types and validation, model-based interface for CRUD operations, middleware hooks (pre/post save, validate, remove), population (joining referenced documents), virtuals, query builders, and plugin support. It adds structure to MongoDB's flexible schema while keeping the benefits of document storage.
+
+### TOPIC: JavaScript ###
+
+Q: Explain closures in JavaScript with an example.
+A: A closure is a function that retains access to its outer (lexical) scope variables even after the outer function has returned. Example: function counter() { let count = 0; return function() { return ++count; }; } — the inner function closes over the count variable. Closures enable data privacy, factory functions, and maintaining state in functional programming. Every function in JavaScript creates a closure.
+
+Q: What is the difference between var, let, and const?
+A: var is function-scoped, hoisted with undefined initialization, and can be redeclared. let is block-scoped, hoisted but not initialized (temporal dead zone), and cannot be redeclared in the same scope. const is block-scoped like let, but its binding cannot be reassigned — however, objects and arrays assigned to const can still be mutated. Best practice: use const by default, let when reassignment is needed, avoid var.
+
+Q: Explain prototypal inheritance in JavaScript.
+A: JavaScript uses prototypal inheritance where objects can inherit directly from other objects. Every object has a hidden [[Prototype]] property linking to its prototype object. When a property is accessed, JavaScript looks up the prototype chain until it finds the property or reaches null. Constructor functions use .prototype to share methods. ES6 classes are syntactic sugar over prototypal inheritance — they still use prototypes internally.
+
+Q: What are Promises and async/await?
+A: A Promise represents a future value that can be pending, fulfilled, or rejected. It supports .then() for success, .catch() for errors, and .finally() for cleanup. Promise.all() runs promises in parallel, Promise.race() returns the first settled. async/await is syntactic sugar over promises — async functions always return a promise, and await pauses execution until the promise resolves. This makes asynchronous code look and behave like synchronous code.
+
+Q: What is event delegation in JavaScript?
+A: Event delegation leverages event bubbling to handle events at a higher level in the DOM. Instead of attaching event listeners to each child element, you attach one listener to the parent and use event.target to determine which child was clicked. Benefits include better memory efficiency (fewer listeners), automatic handling of dynamically added elements, and cleaner code. It is a fundamental pattern in vanilla JavaScript.
+
+Q: Explain the JavaScript event loop and call stack.
+A: JavaScript is single-threaded with one call stack. The call stack executes functions in LIFO order. When an async operation occurs, it is offloaded to Web APIs (browser) or libuv (Node.js). When complete, the callback is placed in the task queue (macrotasks like setTimeout) or microtask queue (promises, queueMicrotask). The event loop checks if the call stack is empty, then processes all microtasks first, followed by one macrotask, and repeats.
+
+Q: What is debouncing and throttling?
+A: Debouncing delays function execution until a specified time has passed since the last invocation — useful for search input (wait until user stops typing). Throttling limits function execution to once per specified interval — useful for scroll events or resize handlers. Debounce resets the timer on each call, while throttle executes at regular intervals regardless of how many times the function is called.
+
+### TOPIC: DBMS ###
+
+Q: What is normalization? Explain normal forms.
+A: Normalization is the process of organizing data to reduce redundancy and dependency. 1NF: Atomic values, no repeating groups. 2NF: 1NF + no partial dependencies (all non-key attributes depend on the entire primary key). 3NF: 2NF + no transitive dependencies (non-key attributes don't depend on other non-key attributes). BCNF: Every determinant is a candidate key. Higher forms (4NF, 5NF) address multi-valued and join dependencies.
+
+Q: What are ACID properties in databases?
+A: ACID ensures reliable transaction processing. Atomicity: transactions are all-or-nothing — if any part fails, the entire transaction rolls back. Consistency: transactions bring the database from one valid state to another, maintaining all constraints. Isolation: concurrent transactions don't interfere with each other (levels: read uncommitted, read committed, repeatable read, serializable). Durability: committed transactions persist permanently, even after system failures.
+
+Q: Explain indexing in databases.
+A: An index is a data structure (typically B-tree or B+ tree) that improves query speed by providing quick lookups. Types: Primary (on primary key), Secondary (on non-key columns), Composite (multiple columns), Unique, Full-text, and Hash indexes. Indexes speed up SELECT and WHERE clauses but slow down INSERT, UPDATE, DELETE operations due to index maintenance. Proper indexing strategy balances read and write performance.
+
+Q: What is the difference between SQL and NoSQL databases?
+A: SQL databases are relational with predefined schemas, use structured query language, support ACID transactions, and scale vertically (PostgreSQL, MySQL). NoSQL databases have flexible schemas, use various data models (document, key-value, column-family, graph), follow BASE properties (Basically Available, Soft state, Eventually consistent), and scale horizontally (MongoDB, Redis, Cassandra). Choice depends on data structure, consistency needs, and scale requirements.
+
+Q: What are joins in SQL? Explain types.
+A: Joins combine rows from two or more tables based on related columns. INNER JOIN: returns matching rows from both tables. LEFT JOIN: all rows from left table plus matching rows from right (NULL for non-matches). RIGHT JOIN: all rows from right table plus matching rows from left. FULL OUTER JOIN: all rows from both tables with NULL for non-matches. CROSS JOIN: cartesian product of both tables. SELF JOIN: table joined with itself.
+
+Q: What is a transaction and how is concurrency handled?
+A: A transaction is a sequence of operations performed as a single logical unit. It begins with BEGIN TRANSACTION, ends with COMMIT (success) or ROLLBACK (failure). Concurrency control mechanisms include: locking (shared and exclusive locks), two-phase locking (2PL), timestamp ordering, optimistic concurrency control (validate at commit time), and MVCC (Multi-Version Concurrency Control — each transaction sees a snapshot). These prevent dirty reads, non-repeatable reads, and phantom reads.
+
+### TOPIC: Object-Oriented Programming (OOPs) ###
+
+Q: What are the four pillars of OOP?
+A: Encapsulation: bundling data and methods that operate on that data within a class, hiding internal state behind access modifiers (public, private, protected). Abstraction: hiding complex implementation details and showing only necessary features through abstract classes and interfaces. Inheritance: creating new classes from existing ones to reuse code — supports single, multilevel, hierarchical, and multiple (via interfaces) inheritance. Polymorphism: same interface, different implementations — compile-time (method overloading) and runtime (method overriding).
+
+Q: What is the difference between abstract classes and interfaces?
+A: Abstract classes can have both abstract (unimplemented) and concrete (implemented) methods, constructors, and instance variables. A class can extend only one abstract class. Interfaces define a contract with only method signatures (Java 8+ allows default methods). A class can implement multiple interfaces. Use abstract classes for shared code among related classes; use interfaces for defining capabilities that unrelated classes can implement.
+
+Q: Explain SOLID principles.
+A: S — Single Responsibility: a class should have only one reason to change. O — Open/Closed: classes should be open for extension, closed for modification. L — Liskov Substitution: subtypes must be substitutable for their base types without altering correctness. I — Interface Segregation: prefer many specific interfaces over one general-purpose interface. D — Dependency Inversion: depend on abstractions, not concrete implementations. These principles lead to maintainable, scalable, and testable code.
+
+Q: What are design patterns? Name common ones.
+A: Design patterns are proven solutions to recurring design problems. Creational: Singleton (one instance), Factory (create without specifying class), Builder (step-by-step construction), Prototype (clone existing objects). Structural: Adapter (incompatible interfaces), Decorator (add behavior dynamically), Facade (simplified interface), Proxy (placeholder/surrogate). Behavioral: Observer (event subscription), Strategy (interchangeable algorithms), Command (encapsulate requests), Iterator (sequential access).
+
+Q: What is the difference between composition and inheritance?
+A: Inheritance creates an "is-a" relationship — a Dog is an Animal. Composition creates a "has-a" relationship — a Car has an Engine. Composition is generally preferred because it offers greater flexibility, avoids fragile base class problem, supports runtime behavior changes, and follows the principle "favor composition over inheritance." Inheritance creates tight coupling, while composition enables loose coupling through dependency injection.
+
+### TOPIC: Operating Systems ###
+
+Q: What is a process and how does it differ from a thread?
+A: A process is an independent program in execution with its own memory space (code, data, heap, stack), program counter, and system resources. A thread is the smallest unit of execution within a process — threads share the process's memory space but have their own stack and program counter. Creating a process is expensive (fork), while threads are lightweight. Inter-process communication (IPC) is complex; threads communicate through shared memory directly.
+
+Q: Explain CPU scheduling algorithms.
+A: FCFS (First Come First Served): simple, non-preemptive, suffers from convoy effect. SJF (Shortest Job First): optimal average waiting time, but requires knowing burst time. SRTF (Shortest Remaining Time First): preemptive SJF. Round Robin: time quantum-based, fair, good for time-sharing. Priority Scheduling: based on priority values, risk of starvation (solved by aging). Multilevel Queue: multiple queues with different algorithms. Multilevel Feedback Queue: allows processes to move between queues.
+
+Q: What is a deadlock? Explain conditions and prevention.
+A: Deadlock occurs when processes are blocked forever, each waiting for resources held by another. Four necessary conditions (Coffman): Mutual Exclusion (resource held exclusively), Hold and Wait (holding one resource while waiting for another), No Preemption (resources cannot be forcibly taken), Circular Wait (circular chain of waiting processes). Prevention: break any one condition. Avoidance: Banker's algorithm. Detection: resource allocation graph. Recovery: process termination or resource preemption.
+
+Q: Explain virtual memory and paging.
+A: Virtual memory allows processes to use more memory than physically available by using disk as extension. Paging divides virtual memory into fixed-size pages and physical memory into frames. The page table maps virtual pages to physical frames. When a page is not in memory, a page fault occurs — the OS loads it from disk. Page replacement algorithms include FIFO, LRU (Least Recently Used), and Optimal. TLB (Translation Lookaside Buffer) caches recent translations for speed.
+
+Q: What is the difference between mutex and semaphore?
+A: Mutex (Mutual Exclusion) is a locking mechanism — only the thread that locked it can unlock it. It is a binary lock used for mutual exclusion. Semaphore is a signaling mechanism with a counter — any thread can signal (increment). Binary semaphore (0/1) is similar to mutex but without ownership. Counting semaphore allows multiple threads to access a resource pool (e.g., connection pool with 10 connections). Mutex provides ownership and priority inheritance; semaphore does not.
+
+Q: Explain different types of memory management.
+A: Contiguous allocation: each process gets a contiguous block — simple but causes external fragmentation. Paging: fixed-size pages eliminate external fragmentation but cause internal fragmentation. Segmentation: variable-size segments based on logical divisions (code, data, stack) — causes external fragmentation. Segmented paging: combines both — segments divided into pages. Memory management also involves swapping (moving entire processes between main memory and disk) and demand paging (loading pages only when needed).
+
+### TOPIC: Computer Networks ###
+
+Q: Explain the OSI model and its seven layers.
+A: The OSI model standardizes network communication in seven layers. Physical: bit transmission over physical medium (cables, signals). Data Link: frame delivery between adjacent nodes, MAC addressing, error detection. Network: logical addressing (IP), routing between networks. Transport: end-to-end delivery, segmentation, flow control (TCP/UDP). Session: managing sessions between applications. Presentation: data formatting, encryption, compression. Application: user-facing protocols (HTTP, FTP, SMTP, DNS).
+
+Q: What is the difference between TCP and UDP?
+A: TCP (Transmission Control Protocol): connection-oriented, reliable, ordered delivery, flow control, congestion control, three-way handshake (SYN, SYN-ACK, ACK). Used for HTTP, FTP, email. UDP (User Datagram Protocol): connectionless, unreliable, no ordering guarantee, no flow control, lower latency. Used for DNS, video streaming, gaming, VoIP. TCP guarantees delivery at the cost of speed; UDP prioritizes speed over reliability.
+
+Q: What is DNS and how does it work?
+A: DNS (Domain Name System) translates domain names to IP addresses. Resolution process: browser checks cache → OS cache → router cache → ISP's recursive resolver → root name server → TLD name server (.com, .org) → authoritative name server → returns IP address. DNS uses hierarchical distributed databases. Record types include A (IPv4), AAAA (IPv6), CNAME (alias), MX (mail), NS (name server), and TXT (text/verification).
+
+Q: Explain HTTP and HTTPS. What are HTTP methods?
+A: HTTP (HyperText Transfer Protocol) is a stateless application-layer protocol for web communication. HTTPS adds TLS/SSL encryption for security. HTTP methods: GET (retrieve data), POST (create resource), PUT (replace resource), PATCH (partial update), DELETE (remove resource), HEAD (headers only), OPTIONS (supported methods). Status codes: 2xx (success), 3xx (redirect), 4xx (client error), 5xx (server error). HTTP/2 adds multiplexing, header compression, server push.
+
+Q: What is the three-way handshake in TCP?
+A: The three-way handshake establishes a TCP connection. Step 1 — SYN: client sends a SYN packet with an initial sequence number to the server. Step 2 — SYN-ACK: server responds with SYN-ACK, acknowledging client's sequence number and sending its own. Step 3 — ACK: client sends ACK confirming server's sequence number. Connection is now established and data transfer can begin. Connection termination uses a four-way handshake (FIN, ACK, FIN, ACK).
+
+Q: What are subnetting and CIDR?
+A: Subnetting divides a network into smaller sub-networks by borrowing bits from the host portion of an IP address. This improves security, reduces broadcast domains, and optimizes IP allocation. Subnet mask identifies network and host portions (e.g., 255.255.255.0 or /24). CIDR (Classless Inter-Domain Routing) replaces classful addressing with variable-length subnet masking — notation like 192.168.1.0/24 specifies 24 network bits and 8 host bits (254 usable hosts).
+
+### TOPIC: HR Interview Questions ###
+
+Q: Tell me about yourself.
+A: Structure your answer using Present-Past-Future format. Present: your current role, skills, and what you're working on. Past: relevant experience, education, and key achievements. Future: what you're looking for and why this role excites you. Keep it under 2 minutes, focus on professional aspects, quantify achievements where possible, and tailor it to the job description. Avoid personal details unless relevant to the role.
+
+Q: What are your strengths and weaknesses?
+A: For strengths, choose 2-3 that are directly relevant to the role and provide evidence — "I'm strong in problem-solving; in my last project, I optimized a database query that reduced page load time by 60%." For weaknesses, choose a genuine but non-critical weakness and show active improvement — "I sometimes over-engineer solutions, so I've started using timeboxing to balance thoroughness with deadlines." Never say "I'm a perfectionist" or "I work too hard."
+
+Q: Why do you want to work here?
+A: Research the company thoroughly. Mention specific aspects: their products, technology stack, engineering culture, recent achievements, or mission. Connect your skills and career goals to their needs. Example: "I admire how your team uses microservices architecture at scale. My experience building distributed systems with Node.js aligns perfectly, and I'm excited about contributing to your real-time processing pipeline."
+
+Q: Where do you see yourself in 5 years?
+A: Show ambition aligned with the company's growth path. Focus on skill development, increasing responsibility, and impact. Example: "In 5 years, I see myself as a senior engineer or tech lead, having deepened my expertise in system design and mentoring junior developers. I want to lead projects that directly impact user experience and business metrics."
+
+Q: Describe a challenging project and how you handled it.
+A: Use the STAR method. Situation: briefly describe the context. Task: your specific responsibility. Action: detailed steps you took, technologies used, decisions made. Result: quantifiable outcome. Example: "Our API response time was 3 seconds. I implemented Redis caching, optimized MongoDB queries with proper indexing, and added pagination. Response time dropped to 200ms, improving user retention by 15%."
+
+Q: How do you handle conflicts with teammates?
+A: Show emotional intelligence and professionalism. Listen actively to understand their perspective. Focus on the issue, not the person. Use data and facts to support your position. Seek compromise or escalate to a manager if needed. Example: "When a colleague disagreed on our database choice, I organized a comparison meeting where we evaluated both options against our requirements. We agreed on a hybrid approach that leveraged both strengths."
+
+Q: Why are you leaving your current job?
+A: Stay positive — never badmouth previous employers. Focus on growth, new challenges, or career alignment. Example: "I've learned a lot in my current role and I'm grateful for the experience. However, I'm looking for an opportunity that offers more challenges in distributed systems and the chance to work on products that impact millions of users, which is why this position excites me."
+
+Q: How do you handle pressure and tight deadlines?
+A: Demonstrate composure and strategy. Mention prioritization frameworks (impact vs effort matrix), breaking tasks into manageable chunks, clear communication with stakeholders about realistic timelines, and knowing when to ask for help. Provide a specific example: "During a product launch, I prioritized critical features, delegated tasks effectively, and communicated daily progress. We delivered on time with zero critical bugs."

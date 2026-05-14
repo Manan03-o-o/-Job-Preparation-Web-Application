@@ -17,26 +17,20 @@ app.use(cookieParser())
 // Routes
 const authRouter = require("./routes/auth.routes")
 const interviewRouter = require("./routes/interview.routes")
+const aiRouter = require("./routes/ai.routes")
 
 app.use("/api/auth", authRouter)
 app.use("/api/interview", interviewRouter)
+app.use("/api/ai", aiRouter)
 
 // Health check
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Prepify API is running ✅" })
 })
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({
-    message: `Route ${req.method} ${req.originalUrl} not found`
-  })
-})
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error("Global error:", err?.message)
-  res.status(500).json({ message: err?.message || "Internal server error" })
-})
+// Error handling middleware
+const { notFoundHandler, globalErrorHandler } = require("./middlewares/error.middleware")
+app.use(notFoundHandler)
+app.use(globalErrorHandler)
 
 module.exports = app
